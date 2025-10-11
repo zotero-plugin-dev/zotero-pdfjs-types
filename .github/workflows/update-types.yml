@@ -1,0 +1,120 @@
+name: Daily Build Zotero PDF.js Types
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check if pdf.js changed
+    runs-on: ubuntu-latest
+    outputs:
+      commit_hash: ${{ steps.get-latest-commit.outputs.short_commit }}
+      need_build: ${{ steps.cache-hash.outputs.cache-hit != 'true' }}
+    steps:
+      - name: Get latest commit hash from Zotero/pdf.js
+        id: get-latest-commit
+        run: |
+          latest_commit=$(git ls-remote https://github.com/zotero/pdf.js.git HEAD | cut -f1)
+          echo "latest_commit=$latest_commit" >> $GITHUB_OUTPUT
+          echo "short_commit=${latest_commit:0:7}" >> $GITHUB_OUTPUT
+
+      - name: Cache commit hash
+        id: cache-hash
+        uses: actions/cache@v4
+        with:
+          path: last_commit
+          key: zotero-pdfjs-commit-${{ steps.get-latest-commit.outputs.latest_commit }}
+
+      - name: Save new commit hash
+        if: ${{ steps.cache-hash.outputs.cache-hit != 'true' }}
+        run: |
+          echo "${{ steps.get-latest-commit.outputs.latest_commit }}" > last_commit
+
+  build:
+    name: Build pdf.js & extract types
+    needs: check
+    if: ${{ needs.check.outputs.need_build == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone Zotero/pdf.js
+        run: git clone https://github.com/zotero/pdf.js.git pdfjs
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: pdfjs
+
+      - name: Build pdf.js (gulp dist)
+        run: npx gulp dist
+        working-directory: pdfjs
+
+      - name: Copy types to repo
+        run: |
+          rm -rf types
+          mkdir -p types
+          cp -r pdfjs/build/types/. types/
+          echo "${{ needs.check.outputs.commit_hash }}" > pdfjs-commit.txt
+
+      - name: Commit and push updated types
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add types pdfjs-commit.txt
+          if git diff --cached --quiet; then
+            echo "✅ No changes to commit."
+          else
+            git commit -m "chore: update pdf.js types to commit ${{ needs.check.outputs.commit_hash }}"
+            git push
+          fi
+
+  # publish:
+  #   name: Publish to npm
+  #   needs: build
+  #   if: ${{ needs.check.outputs.need_build == 'true' }}
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - uses: pnpm/action-setup@v3
+  #       with:
+  #         version: 9
+
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         registry-url: "https://registry.npmjs.org/"
+
+  #     - name: Install deps
+  #       run: pnpm install
+
+  #     - name: Bump patch version
+  #       run: |
+  #         current_version=$(node -p "require('./package.json').version")
+  #         new_version=$(node -p "const [M,m,p]=require('./package.json').version.split('.').map(Number);[M,m,p+1].join('.') ")
+  #         npm version $new_version --no-git-tag-version
+  #         git add package.json
+  #         git commit -m "chore: bump version to $new_version"
+  #         git push
+
+  #     - name: Publish package
+  #       run: npm publish --access public
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
