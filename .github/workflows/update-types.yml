@@ -36,53 +36,61 @@ jobs:
           echo "${{ steps.get-latest-commit.outputs.latest_commit }}" > last_commit
 
   build:
-    name: Build pdf.js & extract types
+    name: Build pdf.js & upload types
     needs: check
+    if: ${{ needs.check.outputs.need_build == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Zotero/pdf.js
+        uses: actions/checkout@v5
+        with:
+          repository: zotero/pdf.js
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: latest
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build pdf.js (gulp dist)
+        run: npx gulp dist
+
+      - name: Upload types artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfjs-types
+          path: build/types
+          if-no-files-found: error
+
+  commit:
+    name: Commit updated types
+    needs: [check, build]
     if: ${{ needs.check.outputs.need_build == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout zotero-pdfjs-types repo
+        uses: actions/checkout@v5
+
+      - name: Download built types
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
+          name: pdfjs-types
+          path: types
 
-      - name: Clone Zotero/pdf.js
-        run: git clone https://github.com/zotero/pdf.js.git pdfjs
-
-      - uses: actions/setup-node@v4
+      - name: Commit and push changes
+        uses: EndBug/add-and-commit@v9
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: pdfjs/package-lock.json
-
-      - name: Install dependencies
-        run: npm install
-        working-directory: pdfjs
-
-      - name: Build pdf.js (gulp dist)
-        run: npx gulp dist
-        working-directory: pdfjs
-
-      - name: Copy types to repo
-        run: |
-          rm -rf types
-          mkdir -p types
-          cp -r pdfjs/build/types/. types/
-          # echo "${{ needs.check.outputs.commit_hash }}" > pdfjs-commit.txt
-
-      - name: Commit and push updated types
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add types
-          if git diff --cached --quiet; then
-            echo "✅ No changes to commit."
-          else
-            git commit -m "feat: update pdf.js types to commit ${{ needs.check.outputs.commit_hash }}"
-            git push
-          fi
+          author_name: github-actions[bot]
+          author_email: github-actions[bot]@users.noreply.github.com
+          message: "feat: update pdf.js types to commit ${{ needs.check.outputs.commit_hash }}"
+          add: "types"
 
   # publish:
   #   name: Publish to npm
@@ -96,17 +104,10 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v4
 
-  #     - uses: pnpm/action-setup@v3
-  #       with:
-  #         version: 9
-
   #     - uses: actions/setup-node@v4
   #       with:
   #         node-version: 20
   #         registry-url: "https://registry.npmjs.org/"
-
-  #     - name: Install deps
-  #       run: pnpm install
 
   #     - name: Bump patch version
   #       run: |
