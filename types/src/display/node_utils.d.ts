@@ -3,7 +3,7 @@ export class NodeCanvasFactory extends BaseCanvasFactory {
     /**
      * @ignore
      */
-    _createCanvas(width: any, height: any): any;
+    _createCanvas(width: any, height: any): import("@napi-rs/canvas").Canvas;
 }
 export class NodeCMapReaderFactory extends BaseCMapReaderFactory {
     /**
