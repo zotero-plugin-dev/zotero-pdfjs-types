@@ -6,6 +6,7 @@ export class Blender {
     foreground: Color;
     gradient: (p: any) => Color;
     dark: boolean;
+    forceInversion: boolean;
     fullPageImageDetected: boolean;
     origFill: any;
     origFillRect: any;
@@ -35,7 +36,6 @@ export class Blender {
     };
     customDrawImage(args: any): any;
     hasBackgrounds: boolean | undefined;
-    forceInversion: boolean | undefined;
     isColorNeutral(r: any, g: any, b: any, dev: any): boolean;
     getCanvasColor(text: any, tx: any, ty: any): Color;
     cachedImage: any;
