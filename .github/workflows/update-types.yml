@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout Zotero/pdf.js
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: zotero/pdf.js
 
@@ -76,7 +76,7 @@ jobs:
 
     steps:
       - name: Checkout zotero-pdfjs-types repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download built types
         uses: actions/download-artifact@v7
