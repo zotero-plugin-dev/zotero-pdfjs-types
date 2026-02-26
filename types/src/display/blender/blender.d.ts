@@ -18,6 +18,15 @@ export class Blender {
     origStrokeSyle: (val: any) => void;
     interceptStyleProperty(prop: any): (val: any) => void;
     /**
+     * Sets up fillStyle/strokeStyle interceptors on an external (group) context
+     * so that calcStyle transforms text/shape colors within transparency groups.
+     */
+    interceptGroupStyles(ctx: any): void;
+    /**
+     * Restores original fillStyle/strokeStyle on a group context.
+     */
+    cleanupGroupStyles(ctx: any): void;
+    /**
      * Removes all our property definitions and method wraps on this.ctx.
      */
     unwrap(): void;
