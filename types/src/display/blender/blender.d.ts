@@ -36,6 +36,7 @@ export class Blender {
     calcStyle(color: any): any;
     getTextStyle(color: any, textBg: any, minContrast?: number): any;
     distinctColors(imageData: any, cutoffThreshold: any): number;
+    neutralRatio(imageData: any, deviation?: number, step?: number): number;
     averageLightness(imageData: any): number;
     getTransformedBoundingBox(ctx: any, dx: any, dy: any, dWidth: any, dHeight: any): {
         x: number;
