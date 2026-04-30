@@ -4,13 +4,9 @@
  * be able to use mix-blend-mode for some of them.
  */
 export class DrawLayer {
-    static "__#34@#id": number;
+    static "__#private@#id": number;
     static get _svgFactory(): any;
-    static "__#34@#setBox"(element: any, [x, y, width, height]: [any, any, any, any]): void;
-    constructor({ pageIndex }: {
-        pageIndex: any;
-    });
-    pageIndex: any;
+    static "__#private@#setBox"(element: any, [x, y, width, height]: [any, any, any, any]): void;
     setParent(parent: any): void;
     draw(properties: any, isPathUpdatable?: boolean, hasClip?: boolean): {
         id: number;

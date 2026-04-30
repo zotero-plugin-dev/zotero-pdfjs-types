@@ -1,11 +1,11 @@
 export type PDFDocumentProxy = import("../src/display/api").PDFDocumentProxy;
 export type EventBus = import("./event_utils").EventBus;
-export type IPDFLinkService = import("./interfaces").IPDFLinkService;
+export type PDFLinkService = import("./pdf_link_service.js").PDFLinkService;
 export type PDFFindControllerOptions = {
     /**
      * - The navigation/linking service.
      */
-    linkService: IPDFLinkService;
+    linkService: PDFLinkService;
     /**
      * - The application event bus.
      */
@@ -27,7 +27,7 @@ export function getOriginalIndex(diffs: any, pos: any, len: any): any[];
 export function normalize(text: any, options?: {}): any[];
 /**
  * @typedef {Object} PDFFindControllerOptions
- * @property {IPDFLinkService} linkService - The navigation/linking service.
+ * @property {PDFLinkService} linkService - The navigation/linking service.
  * @property {EventBus} eventBus - The application event bus.
  * @property {boolean} [updateMatchesCountOnProgress] - True if the matches
  *   count must be updated on progress or only when the last page is reached.
@@ -41,7 +41,7 @@ export class PDFFindController {
      * @param {PDFFindControllerOptions} options
      */
     constructor({ linkService, eventBus, updateMatchesCountOnProgress }: PDFFindControllerOptions);
-    _linkService: import("./interfaces").IPDFLinkService;
+    _linkService: import("./pdf_link_service.js").PDFLinkService;
     _eventBus: import("./event_utils").EventBus;
     /**
      * Callback used to check if a `pageNumber` is currently visible.
@@ -70,7 +70,6 @@ export class PDFFindController {
     /**
      * @typedef {Object} PDFFindControllerScrollMatchIntoViewParams
      * @property {HTMLElement} element
-     * @property {number} selectedLeft
      * @property {number} pageIndex
      * @property {number} matchIndex
      */
@@ -78,9 +77,8 @@ export class PDFFindController {
      * Scroll the current match into view.
      * @param {PDFFindControllerScrollMatchIntoViewParams}
      */
-    scrollMatchIntoView({ element, selectedLeft, pageIndex, matchIndex, }: {
+    scrollMatchIntoView({ element, pageIndex, matchIndex }: {
         element: HTMLElement;
-        selectedLeft: number;
         pageIndex: number;
         matchIndex: number;
     }): void;
@@ -96,10 +94,10 @@ export class PDFFindController {
         matchIdx: null;
         wrapped: boolean;
     } | undefined;
-    _extractTextPromises: any[] | undefined;
-    _pageContents: any[] | undefined;
-    _pageDiffs: any[] | undefined;
-    _hasDiacritics: any[] | undefined;
+    _extractTextPromises: any;
+    _pageContents: any;
+    _pageDiffs: any;
+    _hasDiacritics: any;
     _matchesCountTotal: number | undefined;
     _pagesToSearch: number | null | undefined;
     _pendingFindMatches: Set<any> | undefined;

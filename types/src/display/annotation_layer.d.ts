@@ -1,15 +1,16 @@
 export type PDFPageProxy = import("./api").PDFPageProxy;
 export type PageViewport = import("./display_utils").PageViewport;
 export type TextAccessibilityManager = import("../../web/text_accessibility.js").TextAccessibilityManager;
-export type IDownloadManager = import("../../web/interfaces").IDownloadManager;
-export type IPDFLinkService = import("../../web/interfaces").IPDFLinkService;
 export type AnnotationEditorUIManager = any;
 export type StructTreeLayerBuilder = import("../../web/struct_tree_layer_builder.js").StructTreeLayerBuilder;
+export type CommentManager = import("../../web/comment_manager.js").CommentManager;
+export type PDFLinkService = import("../../web/pdf_link_service.js").PDFLinkService;
+export type BaseDownloadManager = import("../../web/base_download_manager.js").BaseDownloadManager;
 export type AnnotationElementParameters = {
     data: Object;
     layer: HTMLDivElement;
-    linkService: IPDFLinkService;
-    downloadManager?: import("../../web/interfaces").IDownloadManager | undefined;
+    linkService: PDFLinkService;
+    downloadManager?: import("../../web/base_download_manager.js").BaseDownloadManager | undefined;
     annotationStorage?: AnnotationStorage | undefined;
     /**
      * - Path for image resources, mainly
@@ -27,8 +28,8 @@ export type AnnotationLayerParameters = {
     div: HTMLDivElement;
     annotations: any[];
     page: PDFPageProxy;
-    linkService: IPDFLinkService;
-    downloadManager?: import("../../web/interfaces").IDownloadManager | undefined;
+    linkService: PDFLinkService;
+    downloadManager?: import("../../web/base_download_manager.js").BaseDownloadManager | undefined;
     annotationStorage?: AnnotationStorage | undefined;
     /**
      * - Path for image resources, mainly
@@ -52,6 +53,10 @@ export type AnnotationLayerParameters = {
     accessibilityManager?: import("../../web/text_accessibility.js").TextAccessibilityManager | undefined;
     annotationEditorUIManager?: AnnotationEditorUIManager;
     structTreeLayer?: import("../../web/struct_tree_layer_builder.js").StructTreeLayerBuilder | undefined;
+    /**
+     * - The comment manager instance.
+     */
+    commentManager?: import("../../web/comment_manager.js").CommentManager | undefined;
 };
 /**
  * @typedef {Object} AnnotationLayerParameters
@@ -59,8 +64,8 @@ export type AnnotationLayerParameters = {
  * @property {HTMLDivElement} div
  * @property {Array} annotations
  * @property {PDFPageProxy} page
- * @property {IPDFLinkService} linkService
- * @property {IDownloadManager} [downloadManager]
+ * @property {PDFLinkService} linkService
+ * @property {BaseDownloadManager} [downloadManager]
  * @property {AnnotationStorage} [annotationStorage]
  * @property {string} [imageResourcesPath] - Path for image resources, mainly
  *   for annotation icons. Include trailing slash.
@@ -73,6 +78,7 @@ export type AnnotationLayerParameters = {
  * @property {TextAccessibilityManager} [accessibilityManager]
  * @property {AnnotationEditorUIManager} [annotationEditorUIManager]
  * @property {StructTreeLayerBuilder} [structTreeLayer]
+ * @property {CommentManager} [commentManager] - The comment manager instance.
  */
 /**
  * Manage the layer containing all the annotations.
@@ -82,7 +88,7 @@ export class AnnotationLayer {
      * @private
      */
     private static get _defaultBorderStyle();
-    constructor({ div, accessibilityManager, annotationCanvasMap, annotationEditorUIManager, page, viewport, structTreeLayer, }: {
+    constructor({ div, accessibilityManager, annotationCanvasMap, annotationEditorUIManager, page, viewport, structTreeLayer, commentManager, linkService, annotationStorage, }: {
         div: any;
         accessibilityManager: any;
         annotationCanvasMap: any;
@@ -90,12 +96,16 @@ export class AnnotationLayer {
         page: any;
         viewport: any;
         structTreeLayer: any;
+        commentManager: any;
+        linkService: any;
+        annotationStorage: any;
     });
+    zIndex: number;
     div: any;
     page: any;
     viewport: any;
-    zIndex: number;
     _annotationEditorUIManager: any;
+    _commentManager: any;
     popupShow: any[] | undefined;
     hasEditableAnnotations(): boolean;
     /**
@@ -109,10 +119,8 @@ export class AnnotationLayer {
      * Add link annotations to the annotation layer.
      *
      * @param {Array<Object>} annotations
-     * @param {IPDFLinkService} linkService
-     * @memberof AnnotationLayer
      */
-    addLinkAnnotations(annotations: Array<Object>, linkService: IPDFLinkService): Promise<void>;
+    addLinkAnnotations(annotations: Array<Object>): Promise<void>;
     /**
      * Update the annotation elements on existing annotation layer.
      *
@@ -120,8 +128,12 @@ export class AnnotationLayer {
      * @memberof AnnotationLayer
      */
     update({ viewport }: AnnotationLayerParameters): void;
-    getEditableAnnotations(): any[];
+    getEditableAnnotations(): MapIterator<any>;
     getEditableAnnotation(id: any): any;
+    addFakeAnnotation(editor: any): EditorAnnotationElement;
+    removeAnnotation(id: any): void;
+    updateFakeAnnotations(editors: any): void;
+    togglePointerEvents(enabled?: boolean): void;
     #private;
 }
 export class FreeTextAnnotationElement extends AnnotationElement {
@@ -151,6 +163,13 @@ export class StampAnnotationElement extends AnnotationElement {
     render(): HTMLElement | undefined;
 }
 import { AnnotationStorage } from "./annotation_storage.js";
+declare class EditorAnnotationElement extends AnnotationElement {
+    constructor(parameters: any);
+    editor: any;
+    render(): HTMLElement | undefined;
+    createOrUpdatePopup(): void;
+    remove(): void;
+}
 declare class AnnotationElement {
     static _hasPopupData({ contentsObj, richText }: {
         contentsObj: any;
@@ -170,15 +189,25 @@ declare class AnnotationElement {
     renderForms: any;
     svgFactory: any;
     annotationStorage: any;
+    enableComment: any;
     enableScripting: any;
     hasJSActions: any;
     _fieldObjects: any;
     parent: any;
+    hasOwnCommentButton: boolean;
+    contentElement: HTMLElement | undefined;
     container: HTMLElement | undefined;
     get _isEditable(): any;
-    get hasPopupData(): boolean;
-    updateEdited(params: any): void;
+    get hasPopupData(): any;
+    get commentData(): any;
+    get hasCommentButton(): any;
+    get commentButtonPosition(): any;
+    _normalizePoint(point: any): any;
+    set commentText(text: any);
+    get commentText(): any;
+    removePopup(): void;
     popup: any;
+    updateEdited(params: any): void;
     resetEdited(): void;
     /**
      * Create an empty container for the annotation's HTML element.
@@ -212,6 +241,7 @@ declare class AnnotationElement {
      */
     private _createPopup;
     get hasPopupElement(): boolean;
+    get extraPopupElement(): null;
     /**
      * Render the annotation's HTML element(s).
      *

@@ -4,13 +4,9 @@
 export class DrawingEditor extends AnnotationEditor {
     static _currentDrawId: number;
     static _currentParent: null;
-    static "__#27@#currentDraw": null;
-    static "__#27@#currentDrawingAC": null;
-    static "__#27@#currentDrawingOptions": null;
-    static "__#27@#currentPointerId": number;
-    static "__#27@#currentPointerType": null;
-    static "__#27@#currentPointerIds": null;
-    static "__#27@#currentMoveTimestamp": number;
+    static "__#private@#currentDraw": null;
+    static "__#private@#currentDrawingAC": null;
+    static "__#private@#currentDrawingOptions": null;
     static _INNER_MARGIN: number;
     static _mergeSVGProperties(p1: any, p2: any): any;
     /**
@@ -31,6 +27,7 @@ export class DrawingEditor extends AnnotationEditor {
         INK_COLOR: number;
         INK_THICKNESS: number;
         INK_OPACITY: number;
+        INK_COLOR_AND_OPACITY: number;
         HIGHLIGHT_COLOR: number;
         HIGHLIGHT_THICKNESS: number;
         HIGHLIGHT_FREE: number;
@@ -77,6 +74,8 @@ export class DrawingEditor extends AnnotationEditor {
     constructor(params: any);
     _colorPicker: null;
     _drawId: null;
+    /** @inheritdoc */
+    onUpdatedOpacity(): void;
     _addOutlines(params: any): void;
     /** @inheritdoc */
     updateParams(type: any, value: any): void;
@@ -87,6 +86,10 @@ export class DrawingEditor extends AnnotationEditor {
      * @param {string} color
      */
     _updateProperty(type: any, name: any, value: any): void;
+    /**
+     * Update color and opacity atomically as one undoable command.
+     */
+    _updateColorAndOpacity(color: any, opacity: any): void;
     /** @inheritdoc */
     _onTranslating(_x: any, _y: any): void;
     /** @inheritdoc */

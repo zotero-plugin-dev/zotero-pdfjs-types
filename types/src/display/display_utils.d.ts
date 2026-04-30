@@ -59,8 +59,25 @@ export type PageViewportCloneParameters = {
      */
     dontFlip?: boolean | undefined;
 };
+export function applyOpacity(color: any, opacity: any): any;
+export class ColorScheme {
+    static get isDarkMode(): any;
+}
+export class CSSConstants {
+    static get commentForegroundColor(): any;
+}
 export function deprecated(details: any): void;
 export function fetchData(url: any, type?: string): Promise<any>;
+/**
+ * Find a color that has sufficient contrast against a fixed color.
+ * The luminance (in HSL color space) of the base color is adjusted
+ * until the contrast ratio between the base color and the fixed color
+ * is at least the minimum contrast ratio required by WCAG 2.1.
+ * @param {Array<number>} baseColor
+ * @param {Array<number>} fixedColor
+ * @returns {string}
+ */
+export function findContrastColor(baseColor: Array<number>, fixedColor: Array<number>): string;
 export function getColorValues(colors: any): void;
 export function getCurrentTransform(ctx: any): any[];
 export function getCurrentTransformInverse(ctx: any): any[];
@@ -78,7 +95,8 @@ export function getFilenameFromUrl(url: string): string;
  * @returns {string} Guessed PDF filename.
  */
 export function getPdfFilenameFromUrl(url: string, defaultFilename?: string): string;
-export function getRGB(color: any): any;
+export function getRGB(color: any): any[];
+export function getRGBA(color: any): any[] | null;
 /**
  * NOTE: This is (mostly) intended to support printing of XFA forms.
  */
@@ -89,6 +107,7 @@ export function getXfaPageViewport(xfaPage: any, { scale, rotation }: {
 export function isDataScheme(url: any): boolean;
 export function isPdfFile(filename: any): boolean;
 export function isValidFetchUrl(url: any, baseUrl: any): boolean;
+export function makePathFromDrawOPS(data: any): Path2D;
 /**
  * Event handler to suppress context menu.
  */
@@ -208,7 +227,7 @@ export class PageViewport {
     convertToPdfPoint(x: number, y: number): any[];
 }
 export class PDFDateString {
-    static "__#2@#regex": any;
+    static "__#private@#regex": any;
     /**
      * Convert a PDF date string to a JavaScript `Date` object.
      *
@@ -238,6 +257,11 @@ export class RenderingCancelledException extends RenderingCancelledException_bas
     constructor(msg: any, extraDelay?: number);
     extraDelay: number;
 }
+export function renderRichText({ html, dir, className }: {
+    html: any;
+    dir: any;
+    className: any;
+}, container: any): void;
 /**
  * @param {HTMLDivElement} div
  * @param {PageViewport} viewport
@@ -246,11 +270,11 @@ export class RenderingCancelledException extends RenderingCancelledException_bas
  */
 export function setLayerDimensions(div: HTMLDivElement, viewport: PageViewport, mustFlip?: boolean, mustRotate?: boolean): void;
 export class StatTimer {
-    started: any;
     times: any[];
     time(name: any): void;
     timeEnd(name: any): void;
     toString(): string;
+    #private;
 }
 export function stopEvent(e: any): void;
 export const SupportedImageMimeTypes: string[];

@@ -1,11 +1,12 @@
 export type PDFPageProxy = import("../src/display/api").PDFPageProxy;
 export type PageViewport = import("../src/display/display_utils").PageViewport;
 export type AnnotationStorage = import("../src/display/annotation_storage").AnnotationStorage;
-export type IDownloadManager = import("./interfaces").IDownloadManager;
-export type IPDFLinkService = import("./interfaces").IPDFLinkService;
 export type StructTreeLayerBuilder = import("./struct_tree_layer_builder.js").StructTreeLayerBuilder;
 export type TextAccessibilityManager = import("./text_accessibility.js").TextAccessibilityManager;
 export type AnnotationEditorUIManager = import("../src/display/editor/tools.js").AnnotationEditorUIManager;
+export type CommentManager = import("./comment_manager.js").CommentManager;
+export type PDFLinkService = import("./pdf_link_service.js").PDFLinkService;
+export type BaseDownloadManager = import("./base_download_manager.js").BaseDownloadManager;
 export type AnnotationLayerBuilderOptions = {
     pdfPage: PDFPageProxy;
     annotationStorage?: import("../src/display/annotation_storage").AnnotationStorage | undefined;
@@ -15,8 +16,9 @@ export type AnnotationLayerBuilderOptions = {
      */
     imageResourcesPath?: string | undefined;
     renderForms: boolean;
-    linkService: IPDFLinkService;
-    downloadManager?: import("./interfaces").IDownloadManager | undefined;
+    linkService: PDFLinkService;
+    downloadManager?: import("./base_download_manager.js").BaseDownloadManager | undefined;
+    enableComment?: boolean | undefined;
     enableScripting?: boolean | undefined;
     hasJSActionsPromise?: Promise<boolean> | undefined;
     fieldObjectsPromise?: Promise<{
@@ -26,6 +28,7 @@ export type AnnotationLayerBuilderOptions = {
     accessibilityManager?: import("./text_accessibility.js").TextAccessibilityManager | undefined;
     annotationEditorUIManager?: import("../src/pdf").AnnotationEditorUIManager | undefined;
     onAppend?: Function | undefined;
+    commentManager?: import("./comment_manager.js").CommentManager | undefined;
 };
 export type AnnotationLayerBuilderRenderOptions = {
     viewport: PageViewport;
@@ -35,11 +38,6 @@ export type AnnotationLayerBuilderRenderOptions = {
     intent?: string | undefined;
     structTreeLayer?: import("./struct_tree_layer_builder.js").StructTreeLayerBuilder | undefined;
 };
-export type InjectLinkAnnotationsOptions = {
-    inferredLinks: Array<Object>;
-    viewport: PageViewport;
-    structTreeLayer?: import("./struct_tree_layer_builder.js").StructTreeLayerBuilder | undefined;
-};
 /**
  * @typedef {Object} AnnotationLayerBuilderOptions
  * @property {PDFPageProxy} pdfPage
@@ -47,8 +45,9 @@ export type InjectLinkAnnotationsOptions = {
  * @property {string} [imageResourcesPath] - Path for image resources, mainly
  *   for annotation icons. Include trailing slash.
  * @property {boolean} renderForms
- * @property {IPDFLinkService} linkService
- * @property {IDownloadManager} [downloadManager]
+ * @property {PDFLinkService} linkService
+ * @property {BaseDownloadManager} [downloadManager]
+ * @property {boolean} [enableComment]
  * @property {boolean} [enableScripting]
  * @property {Promise<boolean>} [hasJSActionsPromise]
  * @property {Promise<Object<string, Array<Object>> | null>}
@@ -57,6 +56,7 @@ export type InjectLinkAnnotationsOptions = {
  * @property {TextAccessibilityManager} [accessibilityManager]
  * @property {AnnotationEditorUIManager} [annotationEditorUIManager]
  * @property {function} [onAppend]
+ * @property {CommentManager} [commentManager]
  */
 /**
  * @typedef {Object} AnnotationLayerBuilderRenderOptions
@@ -64,23 +64,18 @@ export type InjectLinkAnnotationsOptions = {
  * @property {string} [intent] - The default value is "display".
  * @property {StructTreeLayerBuilder} [structTreeLayer]
  */
-/**
- * @typedef {Object} InjectLinkAnnotationsOptions
- * @property {Array<Object>} inferredLinks
- * @property {PageViewport} viewport
- * @property {StructTreeLayerBuilder} [structTreeLayer]
- */
 export class AnnotationLayerBuilder {
     /**
      * @param {AnnotationLayerBuilderOptions} options
      */
-    constructor({ pdfPage, linkService, downloadManager, annotationStorage, imageResourcesPath, renderForms, enableScripting, hasJSActionsPromise, fieldObjectsPromise, annotationCanvasMap, accessibilityManager, annotationEditorUIManager, onAppend, }: AnnotationLayerBuilderOptions);
+    constructor({ pdfPage, linkService, downloadManager, annotationStorage, imageResourcesPath, renderForms, enableComment, commentManager, enableScripting, hasJSActionsPromise, fieldObjectsPromise, annotationCanvasMap, accessibilityManager, annotationEditorUIManager, onAppend, }: AnnotationLayerBuilderOptions);
     pdfPage: import("../src/display/api").PDFPageProxy;
-    linkService: import("./interfaces").IPDFLinkService;
-    downloadManager: import("./interfaces").IDownloadManager | undefined;
+    linkService: import("./pdf_link_service.js").PDFLinkService;
+    downloadManager: import("./base_download_manager.js").BaseDownloadManager | undefined;
     imageResourcesPath: string;
     renderForms: boolean;
     annotationStorage: import("../src/display/annotation_storage").AnnotationStorage;
+    enableComment: boolean;
     enableScripting: boolean;
     _hasJSActionsPromise: Promise<boolean>;
     _fieldObjectsPromise: Promise<{
@@ -92,7 +87,7 @@ export class AnnotationLayerBuilder {
     annotationLayer: AnnotationLayer | null;
     div: HTMLDivElement | null;
     _cancelled: boolean;
-    _eventBus: any;
+    _eventBus: import("./event_utils.js").EventBus;
     /**
      * @param {AnnotationLayerBuilderRenderOptions} options
      * @returns {Promise<void>} A promise that is resolved when rendering of the
@@ -103,11 +98,11 @@ export class AnnotationLayerBuilder {
     hide(internal?: boolean): void;
     hasEditableAnnotations(): boolean;
     /**
-     * @param {InjectLinkAnnotationsOptions} options
+     * @param {Array<Object>} inferredLinks
      * @returns {Promise<void>} A promise that is resolved when the inferred links
      *   are added to the annotation layer.
      */
-    injectLinkAnnotations({ inferredLinks, viewport, structTreeLayer, }: InjectLinkAnnotationsOptions): Promise<void>;
+    injectLinkAnnotations(inferredLinks: Array<Object>): Promise<void>;
     #private;
 }
 import { AnnotationLayer } from "../src/pdf";

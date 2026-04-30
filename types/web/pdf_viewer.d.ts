@@ -3,11 +3,11 @@ export type PDFPageProxy = import("../src/display/api").PDFPageProxy;
 export type PageViewport = import("../src/display/display_utils").PageViewport;
 export type OptionalContentConfig = import("../src/display/optional_content_config").OptionalContentConfig;
 export type EventBus = import("./event_utils").EventBus;
-export type IDownloadManager = import("./interfaces").IDownloadManager;
-export type IL10n = import("./interfaces").IL10n;
-export type IPDFLinkService = import("./interfaces").IPDFLinkService;
 export type PDFFindController = import("./pdf_find_controller").PDFFindController;
 export type PDFScriptingManager = import("./pdf_scripting_manager").PDFScriptingManager;
+export type PDFLinkService = import("./pdf_link_service.js").PDFLinkService;
+export type BaseDownloadManager = import("./base_download_manager.js").BaseDownloadManager;
+export type L10n = import("./l10n.js").L10n;
 export type PDFViewerOptions = {
     /**
      * - The container for the viewer element.
@@ -24,12 +24,12 @@ export type PDFViewerOptions = {
     /**
      * - The navigation/linking service.
      */
-    linkService?: import("./interfaces").IPDFLinkService | undefined;
+    linkService?: import("./pdf_link_service.js").PDFLinkService | undefined;
     /**
      * - The download manager
      * component.
      */
-    downloadManager?: import("./interfaces").IDownloadManager | undefined;
+    downloadManager?: import("./base_download_manager.js").BaseDownloadManager | undefined;
     /**
      * - The find controller
      * component.
@@ -111,9 +111,22 @@ export type PDFViewerOptions = {
      */
     enableDetailCanvas?: boolean | undefined;
     /**
+     * - All images whose width and
+     * height are at least this value (in pixels) will be lazily inserted in the
+     * dom to allow right-clicking and saving them. Use `-1` to disable this.
+     */
+    imagesRightClickMinSize?: number | undefined;
+    /**
+     * - When enabled, PDF
+     * rendering will keep track of which areas of the page each PDF operation
+     * affects. Then, when rendering a partial page (if `enableDetailCanvas` is
+     * enabled), it will only run through the operations that affect that portion.
+     */
+    enableOptimizedPartialRendering?: boolean | undefined;
+    /**
      * - Localization service.
      */
-    l10n?: import("./interfaces").IL10n | undefined;
+    l10n?: import("./l10n.js").L10n | undefined;
     /**
      * - Enables PDF document permissions,
      * when they exist. The default value is `false`.
@@ -125,11 +138,6 @@ export type PDFViewerOptions = {
      * mode.
      */
     pageColors?: Object | undefined;
-    /**
-     * - Enables hardware acceleration for
-     * rendering. The default value is `false`.
-     */
-    enableHWA?: boolean | undefined;
     /**
      * - Enable zooming on pinch gesture.
      * The default value is `true`.
@@ -156,8 +164,8 @@ export namespace PagesCountLimit {
  * @property {HTMLDivElement} container - The container for the viewer element.
  * @property {HTMLDivElement} [viewer] - The viewer element.
  * @property {EventBus} eventBus - The application event bus.
- * @property {IPDFLinkService} [linkService] - The navigation/linking service.
- * @property {IDownloadManager} [downloadManager] - The download manager
+ * @property {PDFLinkService} [linkService] - The navigation/linking service.
+ * @property {BaseDownloadManager} [downloadManager] - The download manager
  *   component.
  * @property {PDFFindController} [findController] - The find controller
  *   component.
@@ -197,14 +205,19 @@ export namespace PagesCountLimit {
  *   `maxCanvasDim`, it will draw a second canvas on top of the CSS-zoomed one,
  *   that only renders the part of the page that is close to the viewport.
  *   The default value is `true`.
- * @property {IL10n} [l10n] - Localization service.
+ * @property {number} [imagesRightClickMinSize] - All images whose width and
+ *  height are at least this value (in pixels) will be lazily inserted in the
+ *  dom to allow right-clicking and saving them. Use `-1` to disable this.
+ * @property {boolean} [enableOptimizedPartialRendering] - When enabled, PDF
+ *   rendering will keep track of which areas of the page each PDF operation
+ *   affects. Then, when rendering a partial page (if `enableDetailCanvas` is
+ *   enabled), it will only run through the operations that affect that portion.
+ * @property {L10n} [l10n] - Localization service.
  * @property {boolean} [enablePermissions] - Enables PDF document permissions,
  *   when they exist. The default value is `false`.
  * @property {Object} [pageColors] - Overwrites background and foreground colors
  *   with user defined ones in order to improve readability in high contrast
  *   mode.
- * @property {boolean} [enableHWA] - Enables hardware acceleration for
- *   rendering. The default value is `false`.
  * @property {boolean} [supportsPinchToZoom] - Enable zooming on pinch gesture.
  *   The default value is `true`.
  * @property {boolean} [enableAutoLinking] - Enable creation of hyperlinks from
@@ -238,8 +251,8 @@ export class PDFViewer {
     container: HTMLDivElement;
     viewer: Element | null;
     eventBus: import("./event_utils").EventBus;
-    linkService: import("./interfaces").IPDFLinkService | SimpleLinkService;
-    downloadManager: import("./interfaces").IDownloadManager | null;
+    linkService: import("./pdf_link_service.js").PDFLinkService;
+    downloadManager: import("./base_download_manager.js").BaseDownloadManager | null;
     findController: import("./pdf_find_controller").PDFFindController | null;
     _scriptingManager: import("./pdf_scripting_manager").PDFScriptingManager | null;
     imageResourcesPath: string;
@@ -249,7 +262,9 @@ export class PDFViewer {
     maxCanvasDim: number | undefined;
     capCanvasAreaFactor: number | undefined;
     enableDetailCanvas: boolean;
-    l10n: import("./interfaces").IL10n | GenericL10n | undefined;
+    enableOptimizedPartialRendering: boolean;
+    imagesRightClickMinSize: number;
+    l10n: import("./l10n.js").L10n | undefined;
     pageColors: Object | null;
     defaultRenderingQueue: boolean;
     renderingQueue: PDFRenderingQueue | undefined;
@@ -261,6 +276,7 @@ export class PDFViewer {
         _eventHandler: (evt: any) => void;
     };
     presentationModeState: number;
+    get printingAllowed(): boolean;
     get pagesCount(): number;
     getPageView(index: any): any;
     getCachedPageViews(): Set<any>;
@@ -328,7 +344,7 @@ export class PDFViewer {
     get onePageRendered(): any;
     get pagesPromise(): any;
     get _layerProperties(): any;
-    getAllText(): Promise<string | null>;
+    getAllText(interruptSignal?: null): Promise<string | null>;
     /**
      * @param {PDFDocumentProxy} pdfDocument
      */
@@ -336,13 +352,19 @@ export class PDFViewer {
     pdfDocument: import("../src/display/api").PDFDocumentProxy | undefined;
     _scrollMode: any;
     _optionalContentConfigPromise: Promise<import("../src/display/optional_content_config").OptionalContentConfig> | null | undefined;
+    onPagesEdited({ pagesMapper, type, hasBeenCut, pageNumbers }: {
+        pagesMapper: any;
+        type: any;
+        hasBeenCut: any;
+        pageNumbers: any;
+    }): void;
+    _pages: any[] | undefined;
     /**
      * @param {Array|null} labels
      */
     setPageLabels(labels: any[] | null): void;
     _pageLabels: any[] | null | undefined;
     _resetView(): void;
-    _pages: any[] | undefined;
     _currentScale: any;
     _currentScaleValue: any;
     _location: {
@@ -374,12 +396,15 @@ export class PDFViewer {
      *   The default value is `false`.
      * @property {boolean} [ignoreDestinationZoom] - Ignore the zoom argument in
      *   the destination array. The default value is `false`.
+     * @property {string} [center] - Center the view on the specified coordinates.
+     *   The default value is `null`. Possible values are: `null` (don't center),
+     *  `horizontal`, `vertical` and `both`.
      */
     /**
      * Scrolls page into view.
      * @param {ScrollPageIntoViewParameters} params
      */
-    scrollPageIntoView({ pageNumber, destArray, allowNegativeOffset, ignoreDestinationZoom, }: {
+    scrollPageIntoView({ pageNumber, destArray, allowNegativeOffset, ignoreDestinationZoom, center, }: {
         /**
          * - The page number.
          */
@@ -399,6 +424,12 @@ export class PDFViewer {
          * the destination array. The default value is `false`.
          */
         ignoreDestinationZoom?: boolean | undefined;
+        /**
+         * - Center the view on the specified coordinates.
+         * The default value is `null`. Possible values are: `null` (don't center),
+         * `horizontal`, `vertical` and `both`.
+         */
+        center?: string | undefined;
     }): void;
     _updateLocation(firstPage: any): void;
     update(): void;
@@ -457,10 +488,6 @@ export class PDFViewer {
      */
     get spreadMode(): number;
     _updateSpreadMode(pageNumber?: null): void;
-    /**
-     * @private
-     */
-    private _getPageAdvance;
     /**
      * Go to the next page, taking scroll/spread-modes into account.
      * @returns {boolean} Whether navigation occurred.
@@ -590,5 +617,3 @@ export class PDFViewer {
     #private;
 }
 import { PDFRenderingQueue } from "./pdf_rendering_queue.js";
-import { SimpleLinkService } from "./pdf_link_service.js";
-import { GenericL10n } from "./genericl10n";

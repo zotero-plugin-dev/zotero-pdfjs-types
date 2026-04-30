@@ -73,7 +73,7 @@ export class AnnotationEditor {
      * @param {AnnotationEditorLayer} parent
      */
     static paste(item: DataTransferItem, parent: AnnotationEditorLayer): void;
-    static "__#44@#rotatePoint"(x: any, y: any, angle: any): any[];
+    static "__#private@#rotatePoint"(x: any, y: any, angle: any): any[];
     static _round(x: any): number;
     /**
      * Deserialize the editor.
@@ -109,6 +109,9 @@ export class AnnotationEditor {
     annotationElementId: any;
     _willKeepAspectRatio: boolean;
     _structTreeParentId: any;
+    creationDate: any;
+    modificationDate: any;
+    canAddComment: boolean;
     rotation: number;
     pageRotation: number;
     pageDimensions: any[];
@@ -117,6 +120,7 @@ export class AnnotationEditor {
     y: number;
     isAttachedToDOM: boolean;
     deleted: boolean;
+    updatePageIndex(newPageIndex: any): void;
     get editorType(): any;
     get mode(): any;
     /**
@@ -126,6 +130,7 @@ export class AnnotationEditor {
     get propertiesToUpdate(): any[];
     set _isDraggable(value: boolean);
     get _isDraggable(): boolean;
+    get uid(): any;
     /**
      * @returns {boolean} true if the editor handles the Enter key itself.
      */
@@ -234,11 +239,8 @@ export class AnnotationEditor {
     get parentDimensions(): number[];
     /**
      * Set the dimensions of this editor.
-     * @param {number} width
-     * @param {number} height
      */
-    setDims(width: number, height: number): void;
-    fixDims(): void;
+    setDims(): void;
     /**
      * Get the translation used to position this editor when it's created.
      * @returns {Array<number>}
@@ -266,6 +268,8 @@ export class AnnotationEditor {
      * @returns {Promise<EditorToolbar|null>}
      */
     addEditToolbar(): Promise<EditorToolbar | null>;
+    addCommentButtonInToolbar(): void;
+    removeCommentButtonFromToolbar(): void;
     removeEditToolbar(): void;
     addContainer(container: any): void;
     getClientDimensions(): DOMRect;
@@ -284,24 +288,46 @@ export class AnnotationEditor {
     serializeAltText(isForCopying: any): any;
     hasAltText(): boolean;
     hasAltTextData(): any;
-    addCommentButton(): Comment;
-    get commentColor(): null;
-    set comment(text: {
-        text: any;
-        date: any;
-        deleted: any;
-        color: null;
-    });
+    focusCommentButton(): void;
+    addCommentButton(): Comment | null;
+    addStandaloneCommentButton(): void;
+    removeStandaloneCommentButton(): void;
+    hideStandaloneCommentButton(): void;
+    set comment(value: {
+        text: never;
+        richText: never;
+        date: never;
+        deleted: never;
+        color: any;
+        opacity: any;
+    } | null);
     get comment(): {
-        text: any;
-        date: any;
-        deleted: any;
-        color: null;
-    };
-    setCommentData(text: any): void;
+        text: never;
+        richText: never;
+        date: never;
+        deleted: never;
+        color: any;
+        opacity: any;
+    } | null;
+    setCommentData({ comment, popupRef, richText }: {
+        comment: any;
+        popupRef: any;
+        richText: any;
+    }): void;
     get hasEditedComment(): any;
-    editComment(): Promise<void>;
+    get hasDeletedComment(): any;
+    get hasComment(): boolean;
+    editComment(options: any): Promise<void>;
+    toggleComment(isSelected: any, visibility?: undefined): void;
+    setSelectedCommentButton(selected: any): void;
     addComment(serialized: any): void;
+    updateFromAnnotationLayer({ popup: { contents, deleted } }: {
+        popup: {
+            contents: any;
+            deleted: any;
+        };
+    }): void;
+    get parentBoundingClientRect(): DOMRect;
     /**
      * Render this editor in a div.
      * @returns {HTMLDivElement | null}
@@ -324,6 +350,31 @@ export class AnnotationEditor {
      */
     getRect(tx: number, ty: number, rotation?: number): any[];
     getRectInCurrentCoords(rect: any, pageHeight: any): any[];
+    /**
+     * Get the rect in page coordinates without any translation.
+     * It's used when serializing the editor.
+     * @returns {Array<number>}
+     */
+    getPDFRect(): Array<number>;
+    getNonHCMColor(): any;
+    /**
+     * The color has been changed.
+     */
+    onUpdatedColor(): void;
+    getData(): {
+        id: any;
+        pageIndex: number;
+        rect: number[];
+        richText: any;
+        contentsObj: {
+            str: any;
+        };
+        creationDate: any;
+        modificationDate: any;
+        popupRef: boolean;
+        color: any;
+        opacity: any;
+    };
     /**
      * Executed once this editor has been rendered.
      * @param {boolean} focus - true if the editor should be focused.
@@ -413,6 +464,19 @@ export class AnnotationEditor {
     makeResizable(): void;
     get toolbarPosition(): null;
     /**
+     * Get the position of the comment button.
+     * @returns {Array<number>|null}
+     */
+    get commentButtonPosition(): Array<number> | null;
+    get commentButtonPositionInPage(): number[];
+    get commentButtonColor(): any;
+    set commentPopupPosition(pos: any);
+    get commentPopupPosition(): any;
+    hasDefaultPopupPosition(): any;
+    get commentButtonWidth(): any;
+    get elementBeforePopup(): HTMLDivElement | null;
+    setCommentButtonStates(options: any): void;
+    /**
      * onkeydown callback.
      * @param {KeyboardEvent} event
      */
@@ -423,10 +487,12 @@ export class AnnotationEditor {
      * Select this editor.
      */
     select(): void;
+    focus(): void;
     /**
      * Unselect this editor.
      */
     unselect(): void;
+    hideCommentPopup(): void;
     /**
      * Update some parameters which have been changed through the UI.
      * @param {number} type
@@ -479,12 +545,6 @@ export class AnnotationEditor {
      */
     get isEditing(): boolean;
     /**
-     * Set the aspect ratio to use when resizing.
-     * @param {number} width
-     * @param {number} height
-     */
-    setAspectRatio(width: number, height: number): void;
-    /**
      * Get the data to report to the telemetry when the editor is added.
      * @returns {Object}
      */
@@ -502,6 +562,7 @@ export class AnnotationEditor {
     show(visible?: boolean | undefined): void;
     enable(): void;
     disable(): void;
+    updateFakeAnnotationElement(annotationLayer: any): void;
     /**
      * Render an annotation in the annotation layer.
      * @param {Object} annotation

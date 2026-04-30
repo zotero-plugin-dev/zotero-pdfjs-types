@@ -15,11 +15,19 @@ export class TilingPattern {
     ystep: any;
     paintType: any;
     tilingType: any;
+    needsIsolation: any;
     ctx: any;
     canvasGraphicsFactory: any;
     baseTransform: any;
-    createPatternCanvas(owner: any): {
+    patternBaseMatrix: any;
+    canSkipPatternCanvas([width, height, offsetX, offsetY]: [any, any, any, any]): number[] | null;
+    updatePatternDims(clippedBBox: any, dims: any): void;
+    _renderTileCanvas(owner: any, opIdx: any, dimx: any, dimy: any): any;
+    _getCombinedScales(): number[];
+    drawPattern(owner: any, path: any, useEOFill: boolean | undefined, [n, m]: [any, any], opIdx: any): void;
+    createPatternCanvas(owner: any, opIdx: any): {
         canvas: any;
+        canvasEntry: any;
         scaleX: any;
         scaleY: any;
         offsetX: any;
@@ -32,7 +40,7 @@ export class TilingPattern {
     clipBbox(graphics: any, x0: any, y0: any, x1: any, y1: any): void;
     setFillAndStrokeStyleToContext(graphics: any, paintType: any, color: any): void;
     isModifyingCurrentTransform(): boolean;
-    getPattern(ctx: any, owner: any, inverse: any, pathType: any): any;
+    getPattern(ctx: any, owner: any, inverse: any, pathType: any, opIdx: any): any;
 }
 declare class RadialAxialShadingPattern extends BaseShadingPattern {
     constructor(IR: any);
@@ -44,19 +52,23 @@ declare class RadialAxialShadingPattern extends BaseShadingPattern {
     _r0: any;
     _r1: any;
     matrix: any;
-    _createGradient(ctx: any): any;
+    isOriginBased(): boolean;
+    isRadial(): boolean;
+    areConic(): boolean;
+    _createGradient(ctx: any, transform?: null): any;
+    _createReversedGradient(ctx: any, transform?: null): any;
     getPattern(ctx: any, owner: any, inverse: any, pathType: any): any;
 }
 declare class MeshShadingPattern extends BaseShadingPattern {
     constructor(IR: any);
-    _coords: any;
-    _colors: any;
-    _figures: any;
+    _posData: any;
+    _colData: any;
+    _vertexCount: any;
     _bounds: any;
     _bbox: any;
     _background: any;
     matrix: any;
-    _createMeshCanvas(combinedScale: any, backgroundColor: any, cachedCanvases: any): {
+    _createMeshCanvas(combinedScale: any, backgroundColor: any, canvasFactory: any): {
         canvas: any;
         offsetX: number;
         offsetY: number;

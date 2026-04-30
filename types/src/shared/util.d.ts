@@ -39,6 +39,7 @@ export namespace AnnotationEditorParamsType {
     let INK_COLOR: number;
     let INK_THICKNESS: number;
     let INK_OPACITY: number;
+    let INK_COLOR_AND_OPACITY: number;
     let HIGHLIGHT_COLOR: number;
     let HIGHLIGHT_THICKNESS: number;
     let HIGHLIGHT_FREE: number;
@@ -53,6 +54,7 @@ export namespace AnnotationEditorType {
     let HIGHLIGHT: number;
     let STAMP: number;
     let INK: number;
+    let POPUP: number;
     let SIGNATURE: number;
     let COMMENT: number;
 }
@@ -123,7 +125,8 @@ export namespace AnnotationType {
     export let CARET: number;
     let INK_1: number;
     export { INK_1 as INK };
-    export let POPUP: number;
+    let POPUP_1: number;
+    export { POPUP_1 as POPUP };
     export let FILEATTACHMENT: number;
     export let SOUND: number;
     export let MOVIE: number;
@@ -141,6 +144,7 @@ export function assert(cond: any, msg: any): void;
  */
 export const BaseException: any;
 export const BASELINE_FACTOR: number;
+export const BBOX_INIT: number[];
 export function bytesToString(bytes: any): string;
 /**
  * Attempts to create a valid absolute URL.
@@ -162,15 +166,19 @@ export namespace DrawOPS {
     let moveTo: number;
     let lineTo: number;
     let curveTo: number;
+    let quadraticCurveTo: number;
     let closePath: number;
 }
+export const F32_BBOX_INIT: Float32Array<ArrayBuffer>;
 export class FeatureTest {
     static get isLittleEndian(): any;
-    static get isEvalSupported(): any;
     static get isOffscreenCanvasSupported(): any;
     static get isImageDecoderSupported(): any;
+    static get isFloat16ArraySupported(): any;
+    static get isSanitizerSupported(): any;
     static get platform(): any;
     static get isCSSRoundSupported(): any;
+    static get isAlphaColorInputSupported(): any;
 }
 export const FONT_IDENTITY_MATRIX: number[];
 declare const FormatError_base: any;
@@ -181,11 +189,9 @@ export class FormatError extends FormatError_base {
     [x: string]: any;
     constructor(msg: any);
 }
-export function fromBase64Util(str: any): any;
 export function getModificationDate(date?: Date): string;
 export function getUuid(): string;
 export function getVerbosityLevel(): number;
-export const hexNumbers: string[];
 export namespace ImageKind {
     let GRAYSCALE_1BPP: number;
     let RGB_24BPP: number;
@@ -201,7 +207,14 @@ export function isArrayEqual(arr1: any, arr2: any): boolean;
 export const isNodeJS: any;
 export const LINE_DESCENT_FACTOR: 0.35;
 export const LINE_FACTOR: 1.35;
-export function MathClamp(v: any, min: any, max: any): number;
+export function makeArr(): never[];
+export function makeMap(): Map<any, any>;
+export function makeObj(): any;
+export namespace MeshFigureType {
+    let TRIANGLES: number;
+    let LATTICE: number;
+    let PATCH: number;
+}
 export function normalizeUnicode(str: any): any;
 export function objectSize(obj: any): number;
 export namespace OPS {
@@ -348,10 +361,10 @@ export class ResponseException extends ResponseException_base {
 }
 export function setVerbosityLevel(level: any): void;
 export function shadow(obj: any, prop: any, value: any, nonSerializable?: boolean): any;
-export function string32(value: any): string;
 export function stringToBytes(str: any): Uint8Array<any>;
 export function stringToPDFString(str: any, keepEscapeSequence?: boolean): string;
 export function stringToUTF8String(str: any): string;
+export function stripPath(str: any): any;
 export namespace TextRenderingMode {
     export let FILL: number;
     export let STROKE: number;
@@ -365,8 +378,6 @@ export namespace TextRenderingMode {
     export let FILL_STROKE_MASK: number;
     export let ADD_TO_PATH_FLAG: number;
 }
-export function toBase64Util(arr: any): any;
-export function toHexUtil(arr: any): any;
 declare const UnknownErrorException_base: any;
 export class UnknownErrorException extends UnknownErrorException_base {
     [x: string]: any;
@@ -385,9 +396,12 @@ export function unreachable(msg: any): void;
 export function updateUrlHash(url: URL | string, hash: string, allowRel?: boolean): string;
 export function utf8StringToString(str: any): string;
 export class Util {
+    static get hexNums(): any;
     static makeHexColor(r: any, g: any, b: any): string;
+    static domMatrixToTransform(dm: any): any[];
     static scaleMinMax(transform: any, minMax: any): void;
     static transform(m1: any, m2: any): any[];
+    static multiplyByDOMMatrix(m: any, md: any): any[];
     static applyTransform(p: any, m: any, pos?: number): void;
     static applyTransformToBezier(p: any, transform: any, pos?: number): void;
     static applyInverseTransform(p: any, m: any): void;
@@ -398,8 +412,8 @@ export class Util {
     static intersect(rect1: any, rect2: any): number[] | null;
     static pointBoundingBox(x: any, y: any, minMax: any): void;
     static rectBoundingBox(x0: any, y0: any, x1: any, y1: any, minMax: any): void;
-    static "__#1@#getExtremumOnCurve"(x0: any, x1: any, x2: any, x3: any, y0: any, y1: any, y2: any, y3: any, t: any, minMax: any): void;
-    static "__#1@#getExtremum"(x0: any, x1: any, x2: any, x3: any, y0: any, y1: any, y2: any, y3: any, a: any, b: any, c: any, minMax: any): void;
+    static "__#private@#getExtremumOnCurve"(x0: any, x1: any, x2: any, x3: any, y0: any, y1: any, y2: any, y3: any, t: any, minMax: any): void;
+    static "__#private@#getExtremum"(x0: any, x1: any, x2: any, x3: any, y0: any, y1: any, y2: any, y3: any, a: any, b: any, c: any, minMax: any): void;
     static bezierBoundingBox(x0: any, y0: any, x1: any, y1: any, x2: any, y2: any, x3: any, y3: any, minMax: any): void;
 }
 export namespace VerbosityLevel {
