@@ -60,7 +60,7 @@ jobs:
         run: npx gulp dist
 
       - name: Upload types artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: pdfjs-types
           path: build/types
@@ -79,7 +79,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download built types
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: pdfjs-types
           path: types
