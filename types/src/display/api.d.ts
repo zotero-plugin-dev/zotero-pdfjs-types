@@ -999,9 +999,6 @@ export class PDFDocumentProxy {
         items: Array</*elided*/ any>;
     }>>;
     getPageData(data: any): any;
-    getProcessedData(data: any): any;
-    getPageLabels2(data: any): any;
-    getOutline2(data: any): any;
     /**
      * @typedef {Object} GetOptionalContentConfigParameters
      * @property {string} [intent] - Determines the optional content groups that
@@ -1492,6 +1489,7 @@ export class PDFPageProxy {
      *   {@link TextContent} object that represents the page's text content.
      */
     getTextContent(params?: getTextContentParameters): Promise<TextContent>;
+    getPageContent(): Promise<any>;
     /**
      * @returns {Promise<StructTreeNode>} A promise that is resolved with a
      *   {@link StructTreeNode} object that represents the page's structure tree,
