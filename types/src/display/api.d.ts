@@ -494,6 +494,15 @@ export type RenderParameters = {
      * run for which this function returns `true`.
      */
     operationsFilter?: OperationsFilter | undefined;
+    /**
+     * -
+     * PDF-space rectangles and fill colors to attempt during this render.
+     * Unsupported text retains its original appearance.
+     */
+    textColorRegions?: {
+        rect: Array<number>;
+        color: string;
+    }[] | undefined;
 };
 export type OperationsFilter = (index: number) => boolean;
 /**
@@ -1330,6 +1339,9 @@ export class PDFDocumentProxy {
  *   boxes of all PDF operations that render onto the canvas.
  * @property {OperationsFilter} [operationsFilter] - If provided, only
  *   run for which this function returns `true`.
+ * @property {Array<{rect: Array<number>, color: string}>} [textColorRegions] -
+ *   PDF-space rectangles and fill colors to attempt during this render.
+ *   Unsupported text retains its original appearance.
  */
 /**
  * @callback OperationsFilter
@@ -1464,7 +1476,7 @@ export class PDFPageProxy {
      * @returns {RenderTask} An object that contains a promise that is
      *   resolved when the page finishes rendering.
      */
-    render({ canvasContext, canvas, viewport, intent, annotationMode, transform, background, optionalContentConfigPromise, annotationCanvasMap, pageColors, printAnnotationStorage, isEditing, recordImages, recordOperations, operationsFilter, }: RenderParameters): RenderTask;
+    render({ canvasContext, canvas, viewport, intent, annotationMode, transform, background, optionalContentConfigPromise, annotationCanvasMap, pageColors, printAnnotationStorage, isEditing, recordImages, recordOperations, operationsFilter, textColorRegions, }: RenderParameters): RenderTask;
     /**
      * @param {GetOperatorListParameters} params - Page getOperatorList
      *   parameters.
@@ -1619,6 +1631,7 @@ export class RenderTask {
      * @type {Promise<void>}
      */
     get promise(): Promise<void>;
+    get coloredTextRegions(): any;
     /**
      * Cancels the rendering task. If the task is currently rendering it will
      * not be cancelled until graphics pauses with a timeout. The promise that

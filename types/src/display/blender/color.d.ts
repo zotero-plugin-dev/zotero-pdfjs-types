@@ -1,9 +1,3 @@
-/**
- * Taken from https://github.com/shivaprsd/doq MIT License
- *
- * Interface for storing and processing sRGB colors in CIELAB
- * Adapted from => https://github.com/LeaVerou/color.js
- */
 declare class Color {
     static parseHex(str: any): any[];
     static parseRGB(str: any): any;
@@ -19,6 +13,9 @@ declare class Color {
     get lightness(): any;
     get chroma(): number;
     get alpha(): any;
+    get luminance(): number;
+    _luminance: number | undefined;
+    contrast(color: any): number;
     deltaE(color: any): number;
     range(color: any): (p: any) => Color;
     toHex(alpha?: number): string;

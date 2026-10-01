@@ -229,7 +229,11 @@ export class PDFPageView extends BasePDFPageView {
         isEditing: boolean;
         recordOperations: any;
         recordImages: any;
+        textColorRegions: any[];
     };
+    get coloredTextRegions(): any;
+    get renderedTextColorRegions(): any;
+    setTextColorRegions(regions: any): void;
     draw(): Promise<void>;
     currentCanvasWidth: number | undefined;
     /**

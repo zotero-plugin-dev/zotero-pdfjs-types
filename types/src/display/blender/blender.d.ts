@@ -38,17 +38,10 @@ export class Blender {
     distinctColors(imageData: any, cutoffThreshold: any): number;
     neutralRatio(imageData: any, deviation?: number, step?: number): number;
     averageLightness(imageData: any): number;
-    getTransformedBoundingBox(ctx: any, dx: any, dy: any, dWidth: any, dHeight: any): {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
     customDrawImage(args: any): any;
     hasBackgrounds: boolean | undefined;
     isColorNeutral(r: any, g: any, b: any, dev: any): boolean;
     getCanvasColor(text: any, tx: any, ty: any): Color;
     cachedImage: any;
-    adjustColorForVisibility(background: any, color: any): Color;
 }
 import Color from "./color.js";

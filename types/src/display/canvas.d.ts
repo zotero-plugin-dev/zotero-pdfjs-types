@@ -39,15 +39,17 @@ export class CanvasGraphics {
     dependencyTracker: any;
     imagesTracker: any;
     getObject(opIdx: any, data: any, fallback?: null): any;
-    beginDrawing({ transform, viewport, transparency, background, }: {
+    beginDrawing({ transform, viewport, transparency, background, textColorRegions, }: {
         transform: any;
         viewport: any;
         transparency?: boolean | undefined;
         background?: null | undefined;
+        textColorRegions?: null | undefined;
     }): void;
     blender: Blender | null | undefined;
     transparentCanvasEntry: any;
     compositeCtx: any;
+    textColoring: TextColoring | null | undefined;
     executeOperatorList(operatorList: any, executionStartIdx: any, continueCallback: any, stepper: any, operationsFilter: any): any;
     transparentCanvas: any;
     endDrawing(): void;
@@ -224,4 +226,5 @@ declare class CanvasExtraState {
     getClippedPathBoundingBox(pathType?: string, transform?: null): number[] | null;
 }
 import { Blender } from './blender/blender.js';
+import { TextColoring } from "./text_coloring.js";
 export {};
